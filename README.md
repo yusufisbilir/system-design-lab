@@ -16,6 +16,14 @@ My approach to software development is guided by **Architectural Minimalism**:
 * **Modern Primitives:** Mastering React 19’s new async primitives (`useActionState`, `useOptimistic`) to replace heavy third-party state libraries.
 * **The AI Paradox:** With AI, writing code is efficient ("ask and it is done"), so the engineer's responsibility shifts to **System Design**: knowing *which* solutions to leverage and possessing the wisdom to make critical **trade-off decisions**.
 
+## 📂 Lab Structure
+
+This repository is engineered as a **monolithic Next.js application**. Instead of fragmented repositories, each project lives within its own route hierarchy. This design allows for shared primitives, consistent testing strategies, and side-by-side architectural comparisons.
+
+*   `/app/content-engine/` → Global Content Engine
+*   `/app/reactive-hub/` → Reactive Data Hub
+*   `/app/micro-ui/` → Edge-First Micro-UI
+
 ---
 
 ## 🏗️ Active Projects

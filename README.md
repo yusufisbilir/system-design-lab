@@ -20,9 +20,9 @@ My approach to software development is guided by **Architectural Minimalism**:
 
 This repository is a **monolithic Next.js 16 application**. Each project lives within its own route hierarchy to share architectural primitives and benchmarking tools.
 
-- `/app/content-engine/` → Global Content Engine (100k+ Pages)
-- `/app/reactive-hub/` → Reactive Data Hub (Mutations)
-- `/app/micro-ui/` → Edge-First Micro-UI (Modularity)
+- `/app/content-engine/` → Global Content Engine (1000+ Pages, scalable architecture)
+- `/app/reactive-hub/` → Reactive Data Hub (Mutations) [Planned]
+- `/app/micro-ui/` → Edge-First Micro-UI (Modularity) [Planned]
 
 ---
 
@@ -30,9 +30,9 @@ This repository is a **monolithic Next.js 16 application**. Each project lives w
 
 ### 1. Global Content Engine (Scale & Performance)
 
-- **Core Problem:** Serving 100k+ dynamic pages with near-zero TTFB and minimal compute costs.
+- **Core Problem:** Serving 1000+ dynamic pages with near-zero TTFB and minimal compute costs (scalable to 100k+).
 - **The Solution:** **Cache Components** model. Using `"use cache"` to store granular component outputs on the Edge and **PPR** for instant shell delivery.
-- **Design Focus:** Advanced ISR with `revalidateTag(tag, 'max')` for background SWR (Stale-While-Revalidate) updates.
+- **Design Focus:** Advanced ISR with `updateTag()` for selective cache invalidation and tag-based revalidation strategies.
 
 ### 2. Reactive Data Hub (Consistency & Latency)
 
@@ -61,10 +61,28 @@ This repository is a **monolithic Next.js 16 application**. Each project lives w
 
 ---
 
+## ✅ Implementation Status
+
+### Content Engine (Active)
+- ✅ `"use cache"` directive with `cacheLife('hours')` profiles
+- ✅ Granular `cacheTag()` for selective invalidation (`post-${slug}`)
+- ✅ PPR (Partial Prerendering) with Suspense boundaries
+- ✅ React 19 Server Actions with `useOptimistic` for zero-flicker mutations
+- ✅ `updateTag()` for cache invalidation
+- ✅ Mock DB with 1000 posts (2.5s latency simulation)
+- ✅ Client-side performance metrics (TTFB, Cache HIT/MISS detection)
+- ✅ `generateStaticParams` for first 10 posts (ISR for rest)
+
+### Reactive Hub & Micro-UI (Planned)
+- ⏳ Coming soon
+
+---
+
 ## 📈 Technical Decision Log (ADR)
 
 > **ADR-001: Explicit Caching over Standard ISR**
 >
-> - **Context:** 100k+ pages make full-page revalidation expensive and unpredictable.
-> - **Decision:** Implement `"use cache"` at the component level with custom `cacheLife` profiles.
-> - **Consequence:** Reduced server compute (Lambda) by 90% as only specific data fragments revalidate, not the entire page tree.
+> - **Context:** Large-scale content sites (1000+ pages, scalable to 100k+) make full-page revalidation expensive and unpredictable.
+> - **Decision:** Implement `"use cache"` at the component level with `cacheLife('hours')` profile and granular `cacheTag()` for selective invalidation.
+> - **Implementation:** `getCachedPost()` function uses `'use cache'` directive with `cacheTag('posts', \`post-\${slug}\`)` for tag-based invalidation via `updateTag()`.
+> - **Consequence:** Enables on-demand cache invalidation without full-page rebuilds. Mock DB shows 2.5s cold start vs <100ms cache hits, demonstrating potential 90%+ compute reduction at scale.

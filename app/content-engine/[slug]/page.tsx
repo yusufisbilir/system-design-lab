@@ -5,6 +5,11 @@ import { cacheLife, cacheTag } from 'next/cache'
 import { Suspense } from 'react'
 import { PerformanceMetrics } from './performance-metrics'
 
+// Enable ISR (Incremental Static Regeneration) with on-demand revalidation
+// This allows updateTag() to work while keeping pages cached
+export const revalidate = 3600 // 1 hour baseline revalidation
+export const dynamicParams = true // Generate new pages on-demand for slugs not in generateStaticParams
+
 // Modern cache implementation using 'use cache' directive
 // This leverages Next.js 15+ caching with granular control
 async function getCachedPost(slug: string) {

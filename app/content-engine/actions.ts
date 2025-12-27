@@ -1,6 +1,6 @@
 'use server'
 
-import { updateTag } from 'next/cache'
+import { updateTag, revalidatePath } from 'next/cache'
 import { db } from '@/lib/content-engine/db'
 
 export type ActionState = {
@@ -31,7 +31,9 @@ export async function updatePostAction(prevState: ActionState, formData: FormDat
       content: randomUpdate,
     })
 
-    updateTag(`post-${slug}`)
+    // 2. Invalidate cache using both tag-based and path-based revalidation
+    updateTag(`post-${slug}`) // Tag-based invalidation (granular)
+    revalidatePath(`/content-engine/${slug}`) // Path-based invalidation (backup for Vercel)
 
     return {
       success: true,

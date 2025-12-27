@@ -1,23 +1,47 @@
-"use server";
+'use server'
 
-import { revalidatePath } from "next/cache";
-import { db } from "@/lib/content-engine/db";
+import { updateTag } from 'next/cache'
+import { db } from '@/lib/content-engine/db'
 
-export async function updatePostAction(slug: string) {
+export type ActionState = {
+  success: boolean
+  message: string
+  error?: string
+} | null
+
+// React 19 useActionState compatible signature
+export async function updatePostAction(prevState: ActionState, formData: FormData | string): Promise<ActionState> {
+  try {
+    // Handle both FormData and string slug for flexibility
+    const slug = typeof formData === 'string' ? formData : (formData.get('slug') as string) || ''
+
+    if (!slug) {
+      return {
+        success: false,
+        message: 'No slug provided',
+        error: 'Missing slug parameter',
+      }
+    }
+
     // 1. Update the data in our Mock DB
     const randomUpdate = `Updated content at ${new Date().toLocaleTimeString()}. 
-  Random ID: ${Math.floor(Math.random() * 9999)}`;
+  Random ID: ${Math.floor(Math.random() * 9999)}`
 
     await db.updatePost(slug, {
-        content: randomUpdate
-    });
+      content: randomUpdate,
+    })
 
-    // 2. Purge the cache for this specific path
-    // This is the magic line that gives us "On-Demand ISR"
-    revalidatePath(`/content-engine/${slug}`);
+    updateTag(`post-${slug}`)
 
-    // Also revalidate the home page since it might show snippets/titles
-    revalidatePath("/content-engine");
-
-    return { success: true, message: `Purged cache for ${slug}` };
+    return {
+      success: true,
+      message: `Cache purged and post updated: ${slug}`,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: 'Failed to update post',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
 }

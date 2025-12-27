@@ -20,9 +20,8 @@ export function PerformanceMetrics() {
         // TTFB: Time to First Byte (correct calculation)
         const ttfb = Math.round(navEntry.responseStart - navEntry.fetchStart);
 
-        // Cache detection: Check if response came from cache
-        // transferSize === 0 means cached (no network transfer)
-        const cacheHit = navEntry.transferSize === 0 || navEntry.transferSize < 1000;
+        // Cache detection will be done after LCP measurement
+        // Our mock DB has 2.5s delay, so LCP < 500ms indicates cache hit
 
         // FCP: First Contentful Paint
         let fcp = 0;
@@ -32,18 +31,22 @@ export function PerformanceMetrics() {
         }
 
         // LCP: Largest Contentful Paint (use PerformanceObserver for accuracy)
-        let lcp = 0;
         const observer = new PerformanceObserver((list) => {
             const entries = list.getEntries();
             const lastEntry = entries[entries.length - 1] as PerformanceEntry;
-            lcp = Math.round(lastEntry.startTime);
+            const lcp = Math.round(lastEntry.startTime);
+
+            // Cache detection based on LCP (LCP < 500ms = cache hit)
+            const cacheHit = lcp < 500;
+
             setMetrics({ ttfb, fcp, lcp, cacheHit });
         });
 
         try {
             observer.observe({ type: "largest-contentful-paint", buffered: true });
         } catch {
-            // LCP not supported, fallback to FCP
+            // LCP not supported, fallback to TTFB-based detection
+            const cacheHit = ttfb < 200;
             setMetrics({ ttfb, fcp, lcp: fcp, cacheHit });
         }
 
@@ -51,14 +54,17 @@ export function PerformanceMetrics() {
         return () => observer.disconnect();
     }, []);
 
-    const cacheStatus = metrics.cacheHit ? "Cache HIT" : "Cache MISS";
+    const cacheStatus = metrics.cacheHit ? "Cache HIT ✓" : "Cache MISS (DB Query)";
     const ttfbColor = metrics.ttfb < 200 ? "text-green-500" : metrics.ttfb < 1000 ? "text-yellow-500" : "text-red-500";
+    const lcpColor = metrics.lcp < 500 ? "text-green-500" : metrics.lcp < 2000 ? "text-yellow-500" : "text-red-500";
 
     return (
-        <div className="flex gap-4 text-sm font-mono font-bold">
+        <div className="flex flex-wrap gap-4 text-sm font-mono font-bold">
             <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${metrics.cacheHit ? "bg-green-500" : "bg-orange-500"}`}></span>
-                <span>{cacheStatus}</span>
+                <span className={`w-2 h-2 rounded-full ${metrics.cacheHit ? "bg-green-500 animate-pulse" : "bg-orange-500"}`}></span>
+                <span className={metrics.cacheHit ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"}>
+                    {cacheStatus}
+                </span>
             </div>
             <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
@@ -66,11 +72,11 @@ export function PerformanceMetrics() {
             </div>
             <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                <span>FCP: {metrics.fcp}ms</span>
+                <span>FCP: {metrics.fcp || 'N/A'}ms</span>
             </div>
             <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-pink-500"></span>
-                <span>LCP: {metrics.lcp}ms</span>
+                <span>LCP: <span className={lcpColor}>{metrics.lcp}ms</span></span>
             </div>
         </div>
     );

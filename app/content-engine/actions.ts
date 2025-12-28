@@ -1,7 +1,7 @@
 'use server'
 
 import { updateTag } from 'next/cache'
-import { db } from '@/lib/content-engine/db'
+import { db } from '@/app/content-engine/_lib/db'
 
 export type ActionState = {
   success: boolean

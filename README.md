@@ -21,7 +21,7 @@ My approach to software development is guided by **Architectural Minimalism**:
 This repository is a **monolithic Next.js 16 application**. Each project lives within its own route hierarchy to share architectural primitives and benchmarking tools.
 
 - `/app/content-engine/` → Global Content Engine (1000+ Pages, scalable architecture)
-- `/app/reactive-hub/` → Reactive Data Hub (Mutations) [Planned]
+- `/app/reactive-hub/` → Reactive Data Hub (Mutations) [Active]
 - `/app/micro-ui/` → Edge-First Micro-UI (Modularity) [Planned]
 
 ---
@@ -73,7 +73,14 @@ This repository is a **monolithic Next.js 16 application**. Each project lives w
 - ✅ Client-side performance metrics (TTFB, Cache HIT/MISS detection)
 - ✅ `generateStaticParams` for first 10 posts (ISR for rest)
 
-### Reactive Hub & Micro-UI (Planned)
+### Reactive Data Hub (Active)
+- ✅ React 19 `useOptimistic` for zero-latency UI updates
+- ✅ `useActionState` for managing form mutations
+- ✅ Server Actions with `updateTag()` for instant cache invalidation
+- ✅ Optimistic UI rollbacks on server error
+- ✅ Hybrid state management (Server State + Client Optimistic State)
+
+### Micro-UI (Planned)
 - ⏳ Coming soon
 
 ---
@@ -86,3 +93,10 @@ This repository is a **monolithic Next.js 16 application**. Each project lives w
 > - **Decision:** Implement `"use cache"` at the component level with `cacheLife('hours')` profile and granular `cacheTag()` for selective invalidation.
 > - **Implementation:** `getCachedPost()` function uses `'use cache'` directive with `cacheTag('posts', \`post-\${slug}\`)` for tag-based invalidation via `updateTag()`.
 > - **Consequence:** Enables on-demand cache invalidation without full-page rebuilds. Mock DB shows 2.5s cold start vs <100ms cache hits, demonstrating potential 90%+ compute reduction at scale.
+
+> **ADR-002: Optimistic UI with Server-Driven State (React 19)**
+>
+> - **Context:** High-latency server operations (simulated 200-500ms) typically cause UI freezes or require complex client-side state management to maintain responsiveness.
+> - **Decision:** Adopt React 19's native `useOptimistic` and `useActionState` to handle mutations, keeping the client state as a temporary projection of server state.
+> - **Implementation:** `ServerStatusControls` uses `useOptimistic` to immediately reflect status changes, while Server Actions asynchronously update the DB and trigger `updateTag()` for event consistency.
+> - **Consequence:** Eliminates the need for global client store (Redux/Zustand) for mutation state. Achieves zero-flicker user experience even with artificial network delays, maintaining strict server-side source of truth.

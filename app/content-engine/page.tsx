@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { db } from '@/lib/content-engine/db'
+import { db } from '@/app/content-engine/_lib/db'
 import { PostRow } from './post-row'
 import { Suspense } from 'react'
 

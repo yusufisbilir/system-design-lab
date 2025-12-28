@@ -3,7 +3,7 @@
 import { useTransition, useOptimistic, useState } from 'react'
 import { updatePostAction } from './actions'
 import Link from 'next/link'
-import type { Post } from '@/lib/content-engine/db'
+import type { Post } from '@/app/content-engine/_lib/db'
 
 export function PostRow({ post }: { post: Post }) {
   const [isPending, startTransition] = useTransition()

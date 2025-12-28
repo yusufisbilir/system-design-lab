@@ -1,4 +1,4 @@
-import { db } from '@/lib/content-engine/db'
+import { db } from '@/app/content-engine/_lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { cacheLife, cacheTag } from 'next/cache'

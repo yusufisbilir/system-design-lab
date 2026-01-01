@@ -21,8 +21,8 @@ My approach to software development is guided by **Architectural Minimalism**:
 This repository is a **monolithic Next.js 16 application**. Each project lives within its own route hierarchy to share architectural primitives and benchmarking tools.
 
 - `/app/content-engine/` → Global Content Engine (1000+ Pages, scalable architecture)
-- `/app/reactive-hub/` → Reactive Data Hub (Mutations) [Active]
-- `/app/micro-ui/` → Edge-First Micro-UI (Modularity) [Planned]
+- `/app/reactive-hub/` → Reactive Data Hub (Mutations)
+- `/app/micro-ui/` → Edge-First Micro-UI (Modularity) [Active]
 
 ---
 
@@ -42,9 +42,9 @@ This repository is a **monolithic Next.js 16 application**. Each project lives w
 
 ### 3. Edge-First Micro-UI (Modularity)
 
-- **Core Problem:** Feature-independent module deployment without monolithic bundle bloat.
-- **The Solution:** Implementation of **Build Adapters API** and request interception via `proxy.ts`.
-- **Design Focus:** Isolated Edge Runtime execution and shared dependency deduplication.
+- **Core Problem:** Feature-independent module deployment without monolithic bundle bloat or complex client-side federation.
+- **The Solution:** **Proxy Pattern Orchestration**. A central orchestrator intercepts requests and resolves isolated modules dynamically on the Edge.
+- **Design Focus:** Standardized `BuildAdapter` interface and parallel `Suspense` streaming for multi-module composition with 0ms client overhead.
 
 ---
 
@@ -80,8 +80,13 @@ This repository is a **monolithic Next.js 16 application**. Each project lives w
 - ✅ Optimistic UI rollbacks on server error
 - ✅ Hybrid state management (Server State + Client Optimistic State)
 
-### Micro-UI (Planned)
-- ⏳ Coming soon
+### Micro-UI (Active)
+- ✅ Proxy-based module orchestration (`proxy.ts`)
+- ✅ Standardized `BuildAdapter` interface (`loader` + `Component`)
+- ✅ Parallel `Suspense` streaming for isolated features
+- ✅ Edge Runtime execution support
+- ✅ Simulated network latency per module for performance visualization
+- ✅ Independent build-time transformation simulation
 
 ---
 
@@ -100,3 +105,10 @@ This repository is a **monolithic Next.js 16 application**. Each project lives w
 > - **Decision:** Adopt React 19's native `useOptimistic` and `useActionState` to handle mutations, keeping the client state as a temporary projection of server state.
 > - **Implementation:** `ServerStatusControls` uses `useOptimistic` to immediately reflect status changes, while Server Actions asynchronously update the DB and trigger `updateTag()` for event consistency.
 > - **Consequence:** Eliminates the need for global client store (Redux/Zustand) for mutation state. Achieves zero-flicker user experience even with artificial network delays, maintaining strict server-side source of truth.
+
+> **ADR-003: Edge-First Composition via Proxy Pattern**
+>
+> - **Context:** Modular UI development usually involves heavy client-side federation or iframe-based isolation, which hurts performance (TTFB) and increases bundle size.
+> - **Decision:** Implement a server-side Proxy to coordinate independent modules during the Edge request lifecycle, using a shared adapter interface.
+> - **Implementation:** `MicroUIProxy` lazily imports modules and enforces a common `BuildAdapter` contract, allowing the host to stream disparate UI parts via React 19 `Suspense`.
+> - **Consequence:** Achieves micro-frontend benefits (feature isolation, independent loading) with 0ms client-side orchestration overhead. Ensures each module is treated as an independent execution unit on the Edge.
